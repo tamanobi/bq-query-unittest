@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "bq-query-unittest"
+version = "0.1.0"
+description = ""
+authors = ["tamanobi <tamanobi@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+
+[tool.poetry.dev-dependencies]
+black = "^19.10b0"
+pytest = "^5.3.5"
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
