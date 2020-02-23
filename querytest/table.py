@@ -26,7 +26,7 @@ class ColumnMeta:
         , "TIMESTAMP"
     ]
     def __init__(self, _name, _type):
-        assert type(_name) is str and _name != ""
+        assert type(_name) is str and _name != "" and "\n" not in _name and " " not in _name
         assert type(_type) is str and _type != "" and self.is_usable_type(_type)
 
         self._name = _name
@@ -54,6 +54,9 @@ class ColumnMeta:
             return self.is_usable_type(new_t)
 
         return False
+
+    def __str__(self):
+        return f"{self._name} {self._type}"
 
 class Schema:
     def __init__(self, column_list):
