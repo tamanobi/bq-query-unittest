@@ -60,10 +60,15 @@ class ColumnMeta:
 
 class Schema:
     def __init__(self, column_list):
+        assert len(column_list) > 0
         self.column_list = self.list_to_columns(column_list)
 
     def list_to_columns(self, column_list):
         return [ColumnMeta(_name, _type) for _name, _type in column_list]
+
+    def __str__(self):
+        c = ', '.join([str(cl) for cl in self.column_list])
+        return f"STRUCT<{c}>"
 
 class Table:
     # pandasを使っても良いかもしれない

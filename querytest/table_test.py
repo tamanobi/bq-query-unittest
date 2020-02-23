@@ -1,4 +1,4 @@
-from .table import Table, ColumnMeta
+from .table import Table, ColumnMeta, Schema
 from pathlib import Path
 import pytest
 
@@ -24,6 +24,15 @@ class TestColumnMeta:
         with pytest.raises(AssertionError):
             ColumnMeta('name', 'ARRAY')
 
+    def test_strで文字列に変更できる(self):
+        assert str(ColumnMeta('name', 'STRING')) == 'name STRING'
+
+    def test_nameに改行や空白文字は入れられない(self):
+        with pytest.raises(AssertionError):
+            assert ColumnMeta('\n', 'STRING')
+        with pytest.raises(AssertionError):
+            assert ColumnMeta('a b', 'STRING')
+
     def test_使えないタイプを入れるとAssertionError(self):
         with pytest.raises(AssertionError):
             ColumnMeta('name', 'INTEGER')
@@ -36,3 +45,15 @@ class TestColumnMeta:
     def test_ARRAYの直下にARRAYは入れられない(self):
         with pytest.raises(AssertionError):
             ColumnMeta('name', 'ARRAY<ARRAY<STRING>>')
+
+class TestSchema:
+    def test_スキーマを生成できる(self):
+        assert Schema([('name', 'STRING'), ('value', 'INT64')])
+
+    def test_スキーマは空配列から生成しようとするとAssertionErrorになる(self):
+        with pytest.raises(AssertionError):
+            assert Schema([])
+
+    def test_スキーマはstrでSTRUCTに変換できる(self):
+        s = Schema([('time', 'TIMESTAMP'), ('event', 'STRING'), ('id', 'INT64')])
+        assert str(s) == 'STRUCT<time TIMESTAMP, event STRING, id INT64>'
