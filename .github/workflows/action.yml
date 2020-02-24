@@ -20,4 +20,4 @@ jobs:
           python_version: 3.7.6
           poetry_version: 1.0.3
           working_directory: .
-          args: run python -m pytest --cov=src --cov-branch --cov-fail-under=100 querytest
+          args: run pytest querytest
