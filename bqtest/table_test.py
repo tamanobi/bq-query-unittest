@@ -63,6 +63,18 @@ SELECT * FROM UNNEST(ARRAY<STRUCT<name STRING, category STRING, value INT64>>
             == r'[("abc","bcd",300),("ddd","ccc",400),("\"xxx\"","yyy",123)]'
         )
 
+    def test_listからTableを生成できる(self):
+        schema = [("name", "STRING"), ("value", "INT64")]
+        t = Table([["田中", 78], ["小林", 80]], schema, "TABLE1")
+        assert (
+            t.to_sql()
+            == """TABLE1 AS (
+SELECT * FROM UNNEST(ARRAY<STRUCT<name STRING, value INT64>>
+[("田中",78),("小林",80)]
+)
+)"""
+        )
+
 
 class TestColumnMeta:
     def test_STRINGは使えるタイプ(self):

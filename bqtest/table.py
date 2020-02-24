@@ -60,6 +60,9 @@ class ColumnMeta:
     def __str__(self):
         return f"{self._name} {self._type}"
 
+    def name(self):
+        return self._name
+
 
 class Schema:
     def __init__(self, column_list):
@@ -73,6 +76,9 @@ class Schema:
         c = ", ".join([str(cl) for cl in self.column_list])
         return f"STRUCT<{c}>"
 
+    def names(self):
+        return [col.name() for col in self.column_list]
+
 
 class Table:
     # pandasを使っても良いかもしれない
@@ -80,20 +86,31 @@ class Table:
     _rows = None
     _name = None
 
-    def __init__(self, _filename: str, _schema: list, _name: str = ""):
-        assert Path(_filename).exists()
-
-        if Path(_filename).suffix == ".csv":
-            self._rows = pd.read_csv(_filename, header=None, quoting=csv.QUOTE_ALL)
-        elif Path(_filename).suffix == ".json":
-            with open(_filename, "r") as f:
-                records = json.load(f)
-            self._rows = pd.DataFrame.from_records(records, columns=None)
-        else:
-            raise ValueError(f"{_filename} は未対応のファイル形式")
-
+    def __init__(self, _filename_or_list, _schema: list, _name: str = ""):
         self._schema = Schema(_schema)
         self._name = _name
+
+        header = self._schema.names()
+
+        if type(_filename_or_list) is str:
+            filename = _filename_or_list
+            assert Path(filename).exists()
+
+            if Path(filename).suffix == ".csv":
+                self._rows = pd.read_csv(
+                    filename, header=None, names=header, quoting=csv.QUOTE_ALL
+                )
+            elif Path(filename).suffix == ".json":
+                with open(filename, "r") as f:
+                    records = json.load(f)
+                self._rows = pd.DataFrame.from_records(records, columns=header)
+            else:
+                raise ValueError(f"{filename} は未対応のファイル形式")
+        elif type(_filename_or_list) is list:
+            records = _filename_or_list
+            self._rows = pd.DataFrame.from_records(records, columns=header)
+        else:
+            raise ValueError("ファイルパスか、listのみに対応しています")
 
     def dataframe_to_string_list(self):
         rows = []
