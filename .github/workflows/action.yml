@@ -20,4 +20,4 @@ jobs:
           python_version: 3.7.6
           poetry_version: 1.0.3
           working_directory: .
-          args: run pytest bqtest
+          args: run pytest -vv bqqtest
