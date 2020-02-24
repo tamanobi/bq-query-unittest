@@ -1,4 +1,12 @@
-from .table import Table, ColumnMeta, Schema, TemporaryTables, Query, QueryLogicTest
+from .table import (
+    Table,
+    ColumnMeta,
+    Schema,
+    TemporaryTables,
+    Query,
+    QueryLogicTest,
+    QueryTest,
+)
 from pathlib import Path
 import os
 import pytest
@@ -281,7 +289,6 @@ SELECT "-" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM EXPECTED EX
             )
         ]
         query = Query("ACTUAL", """SELECT * FROM abc""", [], {"abc": "INPUT_DATA"})
-
         qlt = QueryLogicTest(client, expected, input_tables, query)
         success, records = qlt.run()
         assert not success
@@ -292,3 +299,78 @@ SELECT "-" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM EXPECTED EX
             )
         ]
 
+
+class TestQueryTest:
+    @pytest.mark.skipif(is_githubactions(), reason="GitHub Actions")
+    def test_辞書データからクエリのテストが実行できる差分なし(self):
+        from google.cloud import bigquery
+
+        client = bigquery.Client()
+        tables = [
+            {
+                "type": "data",
+                "name": "TABLE1",
+                "schema": [("name", "STRING"), ("value", "INT64")],
+                "datum": [["abc", 100]],
+            },
+            {
+                "type": "data",
+                "name": "TABLE2",
+                "schema": [("name", "STRING"), ("value", "INT64")],
+                "datum": [["ddd", 100]],
+            },
+        ]
+        query = {
+            "type": "query",
+            "name": "ACTUAL",
+            "query": "SELECT * FROM hogehoge UNION ALL SELECT * FROM fuga",
+            "map": {"hogehoge": "TABLE1", "fuga": "TABLE2"},
+            "params": [],
+        }
+        expected = {
+            "type": "data",
+            "name": "EXPECTED",
+            "schema": [("name", "STRING"), ("value", "INT64")],
+            "datum": [["abc", 100], ["ddd", 100]],
+        }
+
+        qt = QueryTest(client, expected, tables, query)
+        success, diff = qt.run()
+        assert success and diff == []
+
+    @pytest.mark.skipif(is_githubactions(), reason="GitHub Actions")
+    def test_辞書データからクエリのテストが実行できる差分あり(self):
+        from google.cloud import bigquery
+
+        client = bigquery.Client()
+        tables = [
+            {
+                "type": "data",
+                "name": "TABLE1",
+                "schema": [("name", "STRING"), ("value", "INT64")],
+                "datum": [["abc", 100]],
+            },
+            {
+                "type": "data",
+                "name": "TABLE2",
+                "schema": [("name", "STRING"), ("value", "INT64")],
+                "datum": [["ddd", 100]],
+            },
+        ]
+        query = {
+            "type": "query",
+            "name": "ACTUAL",
+            "query": "SELECT * FROM hogehoge UNION ALL SELECT * FROM fuga",
+            "map": {"hogehoge": "TABLE1", "fuga": "TABLE2"},
+            "params": [],
+        }
+        expected = {
+            "type": "data",
+            "name": "EXPECTED",
+            "schema": [("name", "STRING"), ("value", "INT64")],
+            "datum": [["abc", 100]],
+        }
+
+        qt = QueryTest(client, expected, tables, query)
+        success, diff = qt.run()
+        assert not success and diff != []

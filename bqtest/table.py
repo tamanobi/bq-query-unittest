@@ -228,11 +228,24 @@ SELECT "-" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM EXPECTED EX
             tuple: 成功か失敗を示すBoolと文字列
         """
         query = self.build()
-        query_parameters = [
-            bigquery.ScalarQueryParameter("actual", "STRING", "ACTUAL"),
-            bigquery.ScalarQueryParameter("expected", "STRING", "EXPECTED"),
-        ] + self._query.query_parameters()
+        query_parameters = self._query.query_parameters()
 
         job_config = bigquery.QueryJobConfig(query_parameters=query_parameters)
         result = list(self._client.query(query, job_config=job_config))
         return (len(result) == 0, result)
+
+
+class QueryTest:
+    _qlt = None
+
+    def __init__(self, _client, _expected: dict, _tables: list, _query: dict):
+        expected = Table(_expected["datum"], _expected["schema"], "EXPECTED")
+        tables = [
+            Table(table["datum"], table["schema"], table["name"],) for table in _tables
+        ]
+        query = Query("ACTUAL", _query["query"], _query["params"], _query["map"])
+        self._qlt = QueryLogicTest(_client, expected, tables, query)
+
+    def run(self):
+        return self._qlt.run()
+
