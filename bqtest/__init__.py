@@ -1,1 +1,1 @@
-from .table import Table, Query, QueryLogicTest
+from .table import Table, Query, QueryTest
