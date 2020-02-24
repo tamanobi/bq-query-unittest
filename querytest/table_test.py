@@ -1,4 +1,4 @@
-from .table import Table, ColumnMeta, Schema, TemporaryTables
+from .table import Table, ColumnMeta, Schema, TemporaryTables, Query, QueryLogicTest
 from pathlib import Path
 import pytest
 
@@ -126,26 +126,47 @@ SELECT * FROM UNNEST(ARRAY<STRUCT<name STRING, category STRING, value INT64>>
 )
 )'''
 
-@pytest.mark.skip(reason='BigQueryには直接クエリを発行しない')
-def test_test():
-    from google.cloud import bigquery
+class TestQueryLogicTest:
+    def test_BigQueryのクエリを生成できる(self):
+        from google.cloud import bigquery
+        client = bigquery.Client()
 
-    # Construct a BigQuery client object.
-    client = bigquery.Client()
+        expected = Table(str(Path(__file__).parent / 'testdata/test3.json'),[('name', 'STRING'),('category', 'STRING'),('value', 'INT64'),],'EXPECTED')
+        input_tables = [Table(str(Path(__file__).parent / 'testdata/test3.json'),[('name', 'STRING'),('category', 'STRING'),('value', 'INT64'),],'INPUT_DATA')]
+        query = Query('ACTUAL', """SELECT * FROM abc""", [], {'abc': 'INPUT_DATA'})
 
-    query = """
-        SELECT word, word_count
-        FROM `bigquery-public-data.samples.shakespeare`
-        WHERE corpus = @corpus
-        AND word_count >= @min_word_count
-        ORDER BY word_count DESC;
-    """
-    job_config = bigquery.QueryJobConfig(
-        query_parameters=[
-            bigquery.ScalarQueryParameter("corpus", "STRING", "romeoandjuliet"),
-            bigquery.ScalarQueryParameter("min_word_count", "INT64", 250),
-        ]
-    )
-    query_job = client.query(query, job_config=job_config)  # Make an API request.
+        qlt = QueryLogicTest(client, expected, input_tables, query)
+        assert qlt.build() == """WITH INPUT_DATA AS (
+SELECT * FROM UNNEST(ARRAY<STRUCT<name STRING, category STRING, value INT64>>
+[("abc","bcd",300),("ddd","ccc",400)]
+)
+),EXPECTED AS (
+SELECT * FROM UNNEST(ARRAY<STRUCT<name STRING, category STRING, value INT64>>
+[("abc","bcd",300),("ddd","ccc",400)]
+)
+),ACTUAL AS (SELECT * FROM INPUT_DATA),diff AS (
+SELECT "+" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM ACTUAL EXCEPT DISTINCT SELECT *, ROW_NUMBER() OVER() AS n FROM EXPECTED) UNION ALL
+SELECT "-" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM EXPECTED EXCEPT DISTINCT SELECT *, ROW_NUMBER() OVER() AS n FROM ACTUAL) ORDER BY n ASC
+) SELECT * FROM diff"""
 
-    assert query_job
+    def test_差分が見つからないクエリの場合レコードが空で返ってくる(self):
+        from google.cloud import bigquery
+        client = bigquery.Client()
+
+        expected = Table(str(Path(__file__).parent / 'testdata/test3.json'),[('name', 'STRING'),('category', 'STRING'),('value', 'INT64'),],'EXPECTED')
+        input_tables = [Table(str(Path(__file__).parent / 'testdata/test3.json'),[('name', 'STRING'),('category', 'STRING'),('value', 'INT64'),],'INPUT_DATA')]
+        query = Query('ACTUAL', """SELECT * FROM abc""", [], {'abc': 'INPUT_DATA'})
+
+        qlt = QueryLogicTest(client, expected, input_tables, query)
+        assert list(qlt.run()) == []
+
+    def test_差分があるクエリの場合レコードは空ではない(self):
+        from google.cloud import bigquery
+        client = bigquery.Client()
+
+        expected = Table(str(Path(__file__).parent / 'testdata/test4.json'),[('name', 'STRING'),('category', 'STRING'),('value', 'INT64'),],'EXPECTED')
+        input_tables = [Table(str(Path(__file__).parent / 'testdata/test3.json'),[('name', 'STRING'),('category', 'STRING'),('value', 'INT64'),],'INPUT_DATA')]
+        query = Query('ACTUAL', """SELECT * FROM abc""", [], {'abc': 'INPUT_DATA'})
+
+        qlt = QueryLogicTest(client, expected, input_tables, query)
+        assert len(list(qlt.run())) > 0

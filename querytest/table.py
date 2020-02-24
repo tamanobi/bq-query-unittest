@@ -12,6 +12,7 @@ import re
 from pathlib import Path
 import pandas as pd
 import json
+from google.cloud import bigquery
 
 class ColumnMeta:
     usable_primitive_types = [
@@ -143,3 +144,66 @@ class TemporaryTables:
     def to_sql(self):
         table_strings = ",".join([table.to_sql() for table in self._tables])
         return f"WITH {table_strings}"
+
+class Query:
+    _name = ""
+    _query = ""
+    _query_parameters = []
+    _table_map = {}
+
+    def __init__(self, name: str, query: str, query_parameters: list, table_map: dict):
+        assert type(name) is str and name != "" and " " not in name and "," not in name
+        assert type(query) is str and query != ""
+        assert type(query_parameters) is list
+        assert type(table_map) is dict
+
+        self._name = name
+        self._query = query
+        self._query_parameters = query_parameters
+        self._table_map = table_map
+
+    def to_sql(self):
+        query = self._query
+        for before, after in self._table_map.items():
+            query = re.sub(before, after, query)
+        return f"{self._name} AS ({query})"
+
+    def query_parameters(self):
+        return self._query_parameters
+
+class QueryLogicTest:
+    """クエリロジックのテスト"""
+
+    _client = None
+    _tables = []
+    _expected = None
+    _query = None
+    def __init__(self, client, expected_table: 'Table', input_tables: list, query: 'Query'):
+        self._client = client
+        self._expected = expected_table
+        self._tables = input_tables
+        self._query = query
+
+    def build(self):
+        diff = Query('diff', """
+SELECT "+" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM ACTUAL EXCEPT DISTINCT SELECT *, ROW_NUMBER() OVER() AS n FROM EXPECTED) UNION ALL
+SELECT "-" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM EXPECTED EXCEPT DISTINCT SELECT *, ROW_NUMBER() OVER() AS n FROM ACTUAL) ORDER BY n ASC
+""", [], {})
+        tables = self._tables + [self._expected] + [self._query] + [diff]
+        with_clause = ",".join([table.to_sql() for table in tables])
+        return f"WITH {with_clause} SELECT * FROM diff"
+
+    def run(self):
+        """テストを実際に走らせる
+
+        Returns:
+            tuple: 成功か失敗を示すBoolと文字列
+        """
+        query = self.build()
+        query_parameters = [
+            bigquery.ScalarQueryParameter("actual", "STRING", "ACTUAL"),
+            bigquery.ScalarQueryParameter("expected", "STRING", "EXPECTED"),
+        ] + self._query.query_parameters()
+
+        job_config = bigquery.QueryJobConfig(query_parameters=query_parameters)
+        return self._client.query(query, job_config=job_config)
