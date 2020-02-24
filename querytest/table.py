@@ -1,12 +1,3 @@
-# unittest.run() をすると
-# 要求：クエリのテストがしたい
-# 用意するもの
-# * インプット（複数の可能性あり）
-# * クエリ
-# * アウトプット
-#
-# クエリの対象となる差し替えができないと困難
-
 import csv
 import re
 from pathlib import Path
