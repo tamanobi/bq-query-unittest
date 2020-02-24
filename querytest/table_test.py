@@ -13,7 +13,7 @@ class TestTable:
 
         assert Table(str(p), schema)
 
-    def test_with句を生成できる(self):
+    def test_to_sqlを呼び出すとデータから一時テーブルを作成できる(self):
         p = Path(__file__).parent / 'testdata/test1.csv'
         schema = [
             ('name', 'STRING'),
@@ -21,8 +21,8 @@ class TestTable:
             ('value', 'INT64'),
         ]
         t = Table(str(p), schema, 'TEST_DATA')
-        w = t.to_with_clause()
-        assert w == """WITH TEST_DATA AS (
+        w = t.to_sql()
+        assert w == """TEST_DATA AS (
 SELECT * FROM UNNEST(ARRAY<STRUCT<name STRING, category STRING, value INT64>>
 [("abc","bdc",200),("ほげほげ","ふがふが",300000)]
 )

@@ -122,14 +122,12 @@ class Table:
         with_parens_string = ",".join(with_parens)
         return f"[{with_parens_string}]"
 
-    def to_with_clause(self, with_keyword = True):
+    def to_sql(self):
         header = str(self._schema)
         datum = Table.sql_string(self.dataframe_to_string_list())
 
-        _with = 'WITH ' if with_keyword else ''
-
         return "\n".join([
-            f"{_with}{self._name} AS (",
+            f"{self._name} AS (",
             f"SELECT * FROM UNNEST(ARRAY<{header}>",
             f"{datum}",
             ")",
