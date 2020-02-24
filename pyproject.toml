@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "bq-query-unittest"
+name = "bqtest"
 version = "0.1.0"
 description = ""
 authors = ["tamanobi <tamanobi@gmail.com>"]
