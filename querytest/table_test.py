@@ -177,5 +177,6 @@ SELECT "-" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM EXPECTED EX
         query = Query('ACTUAL', """SELECT * FROM abc""", [], {'abc': 'INPUT_DATA'})
 
         qlt = QueryLogicTest(client, expected, input_tables, query)
-        success, _ = qlt.run()
+        success, records = qlt.run()
         assert success
+        assert records == [bigquery.Row(('+', 'ddd', 'ccc', 400, 2), {'mark': 0, 'name': 1, 'category': 2, 'value': 3, 'n': 4})]
