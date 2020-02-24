@@ -165,10 +165,10 @@ SELECT "-" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM EXPECTED EX
 
         qlt = QueryLogicTest(client, expected, input_tables, query)
         success, _ = qlt.run()
-        assert not success
+        assert success
 
     @pytest.mark.skipif(is_githubactions(), reason='GitHub Actions')
-    def test_差分があるクエリの場合レコードは空ではない(self):
+    def test_期待しているテーブル結果の量よりも大きな結果になった場合マークがプラスになる差分が出る(self):
         from google.cloud import bigquery
         client = bigquery.Client()
 
@@ -178,5 +178,19 @@ SELECT "-" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM EXPECTED EX
 
         qlt = QueryLogicTest(client, expected, input_tables, query)
         success, records = qlt.run()
-        assert success
+        assert not success
         assert records == [bigquery.Row(('+', 'ddd', 'ccc', 400, 2), {'mark': 0, 'name': 1, 'category': 2, 'value': 3, 'n': 4})]
+
+    @pytest.mark.skipif(is_githubactions(), reason='GitHub Actions')
+    def test_期待しているテーブル結果の量に満たない場合マークがマイナスになる差分が出る(self):
+        from google.cloud import bigquery
+        client = bigquery.Client()
+
+        expected = Table(str(Path(__file__).parent / 'testdata/test5.json'),[('name', 'STRING'),('category', 'STRING'),('value', 'INT64'),],'EXPECTED')
+        input_tables = [Table(str(Path(__file__).parent / 'testdata/test3.json'),[('name', 'STRING'),('category', 'STRING'),('value', 'INT64'),],'INPUT_DATA')]
+        query = Query('ACTUAL', """SELECT * FROM abc""", [], {'abc': 'INPUT_DATA'})
+
+        qlt = QueryLogicTest(client, expected, input_tables, query)
+        success, records = qlt.run()
+        assert not success
+        assert records == [bigquery.Row(('-', 'eee', 'fff', 500, 3), {'mark': 0, 'name': 1, 'category': 2, 'value': 3, 'n': 4})]

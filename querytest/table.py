@@ -207,4 +207,4 @@ SELECT "-" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM EXPECTED EX
 
         job_config = bigquery.QueryJobConfig(query_parameters=query_parameters)
         result = list(self._client.query(query, job_config=job_config))
-        return (len(result) > 0, result)
+        return (len(result) == 0, result)
