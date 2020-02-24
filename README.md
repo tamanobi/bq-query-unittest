@@ -3,11 +3,23 @@
 
 BigQueryへのクエリロジックのテストができます
 
+# Usage
+
+```python
+from bqqtest import QueryTest
+from google.cloud import bigquery
+
+expected = {'schema': [('name', 'STRING'), ('value', 'INT64')], 'datum': [['abc', 100]]}
+tables = [{'schema': [('name', 'STRING'), ('value', 'INT64')], 'datum': [['abc', 100]], 'name': 'INPUT_DATA'}]
+query = {'query': 'SELECT * FROM hogehoge', 'map': {'hogehoge': 'INPUT_DATA'}, 'params': []}
+qt = QueryTest(bigquery.Client(), expected, tables, query)
+success, diff = qt.run()
+success # True
+```
+
 ## 特徴
 
- * CSV形式のファイルを元にBigQueryにテーブルを一時的に作成します
- * 一時的に作成したテーブルに対して、クエリを発行し、結果を得ます
- * 結果と、期待しているテーブル(CSVファイル)と突合し、違いがなければテストをパスします
+ * WITHを利用してテストデータを一時的に生成します。このデータはBigQueryに保存されません。BigQueryは保存されているデータ走査した量とAPIリクエスト数で課金されるため、課金額を抑えた状態でテストできます
 
 ## 注意
 BigQueryへ直接クエリを発行します。
