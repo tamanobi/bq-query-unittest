@@ -95,12 +95,6 @@ class Table:
         self._schema = Schema(_schema)
         self._name = _name
 
-    def rows(self):
-        return self._rows
-
-    def schema(self):
-        return self._schema
-
     def dataframe_to_string_list(self):
         rows = []
         for columns in self._rows.itertuples():
