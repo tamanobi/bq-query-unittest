@@ -1,9 +1,21 @@
 [tool.poetry]
 name = "bqtest"
 version = "0.1.0"
-description = ""
+description = "Test BigQuery query using BigQuery"
+readme = "README.md"
 authors = ["tamanobi <tamanobi@gmail.com>"]
 license = "MIT"
+homepage = "https://github.com/tamanobi"
+repository = "https://github.com/tamanobi/bq-query-unittest"
+documentation = "https://github.com/tamanobi/bq-query-unittest"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    'Programming Language :: Python :: 3',
+    "Programming Language :: Python :: 3.7",
+    "Topic :: Utilities",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
 
 [tool.poetry.dependencies]
 python = "^3.7"
