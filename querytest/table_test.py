@@ -125,3 +125,26 @@ SELECT * FROM UNNEST(ARRAY<STRUCT<name STRING, category STRING, value INT64>>
 [("abc","bdc",200),("ほげほげ","ふがふが",300000)]
 )
 )'''
+
+def test_test():
+    from google.cloud import bigquery
+
+    # Construct a BigQuery client object.
+    client = bigquery.Client()
+
+    query = """
+        SELECT word, word_count
+        FROM `bigquery-public-data.samples.shakespeare`
+        WHERE corpus = @corpus
+        AND word_count >= @min_word_count
+        ORDER BY word_count DESC;
+    """
+    job_config = bigquery.QueryJobConfig(
+        query_parameters=[
+            bigquery.ScalarQueryParameter("corpus", "STRING", "romeoandjuliet"),
+            bigquery.ScalarQueryParameter("min_word_count", "INT64", 250),
+        ]
+    )
+    query_job = client.query(query, job_config=job_config)  # Make an API request.
+
+    assert query_job

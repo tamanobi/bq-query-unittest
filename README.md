@@ -1,4 +1,6 @@
 # WIP: BigQueryのクエリをテストするためのツール
+<img alt="Run pytest" src="https://github.com/tamanobi/bq-query-unittest/workflows/Run pytest/badge.svg">
+
 BigQueryへのクエリロジックのテストができます
 
 ## 特徴
