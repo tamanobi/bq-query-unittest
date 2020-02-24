@@ -1,6 +1,10 @@
 from .table import Table, ColumnMeta, Schema, TemporaryTables, Query, QueryLogicTest
 from pathlib import Path
+import os
 import pytest
+
+def is_githubactions():
+    return os.environ.get('GITHUB_RUN_ID') is not None
 
 class TestTable:
     def test_table(self):
@@ -127,6 +131,7 @@ SELECT * FROM UNNEST(ARRAY<STRUCT<name STRING, category STRING, value INT64>>
 )'''
 
 class TestQueryLogicTest:
+    @pytest.mark.skipif(is_githubactions(), reason='GitHub Actions')
     def test_BigQueryのクエリを生成できる(self):
         from google.cloud import bigquery
         client = bigquery.Client()
@@ -149,6 +154,7 @@ SELECT "+" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM ACTUAL EXCE
 SELECT "-" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM EXPECTED EXCEPT DISTINCT SELECT *, ROW_NUMBER() OVER() AS n FROM ACTUAL) ORDER BY n ASC
 ) SELECT * FROM diff"""
 
+    @pytest.mark.skipif(is_githubactions(), reason='GitHub Actions')
     def test_差分が見つからないクエリの場合レコードが空で返ってくる(self):
         from google.cloud import bigquery
         client = bigquery.Client()
@@ -161,6 +167,7 @@ SELECT "-" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM EXPECTED EX
         success, _ = qlt.run()
         assert not success
 
+    @pytest.mark.skipif(is_githubactions(), reason='GitHub Actions')
     def test_差分があるクエリの場合レコードは空ではない(self):
         from google.cloud import bigquery
         client = bigquery.Client()
