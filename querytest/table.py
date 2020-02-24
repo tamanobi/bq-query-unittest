@@ -126,8 +126,10 @@ class Table:
         header = str(self._schema)
         datum = Table.sql_string(self.dataframe_to_string_list())
 
+        _with = 'WITH ' if with_keyword else ''
+
         return "\n".join([
-            f"WITH {self._name} AS (",
+            f"{_with}{self._name} AS (",
             f"SELECT * FROM UNNEST(ARRAY<{header}>",
             f"{datum}",
             ")",
