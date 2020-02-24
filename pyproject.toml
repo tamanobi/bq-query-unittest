@@ -1,6 +1,6 @@
 [tool.poetry]
-name = "bqtest"
-version = "0.2.0"
+name = "bqqtest"
+version = "0.1.0"
 description = "Test BigQuery query using BigQuery"
 readme = "README.md"
 authors = ["tamanobi <tamanobi@gmail.com>"]
