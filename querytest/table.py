@@ -134,9 +134,12 @@ class Table:
             ")"
         ])
 
+class TemporaryTables:
+    _tables = []
+    def __init__(self, pairs: list):
+        # スキーマとデータのペアをリストで受け取る
+        self._tables = [Table(filename, schema, name)for filename, schema, name in pairs]
 
-def add(a, b):
-    return a + b
-
-def main():
-    pass
+    def to_sql(self):
+        table_strings = ",".join([table.to_sql() for table in self._tables])
+        return f"WITH {table_strings}"

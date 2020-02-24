@@ -1,4 +1,4 @@
-from .table import Table, ColumnMeta, Schema
+from .table import Table, ColumnMeta, Schema, TemporaryTables
 from pathlib import Path
 import pytest
 
@@ -84,3 +84,44 @@ class TestSchema:
     def test_スキーマはstrでSTRUCTに変換できる(self):
         s = Schema([('time', 'TIMESTAMP'), ('event', 'STRING'), ('id', 'INT64')])
         assert str(s) == 'STRUCT<time TIMESTAMP, event STRING, id INT64>'
+
+class TestTemporalTable:
+    def test_一時テーブルのインスタンスが作成できる(self):
+        pairs = [
+            [
+                str(Path(__file__).parent / 'testdata/test2.json'),
+                [('name', 'STRING'),('category', 'STRING'),('value', 'INT64'),],
+                'TEST_DATA1',
+            ],
+            [
+                str(Path(__file__).parent / 'testdata/test1.csv'),
+                [('name', 'STRING'),('category', 'STRING'),('value', 'INT64'),],
+                'TEST_DATA2',
+            ],
+        ]
+
+        assert TemporaryTables(pairs)
+
+    def test_一時テーブルのインスタンスからSQLを生成できる(self):
+        pairs = [
+            [
+                str(Path(__file__).parent / 'testdata/test2.json'),
+                [('name', 'STRING'),('category', 'STRING'),('value', 'INT64'),],
+                'TEST_DATA1',
+            ],
+            [
+                str(Path(__file__).parent / 'testdata/test1.csv'),
+                [('name', 'STRING'),('category', 'STRING'),('value', 'INT64'),],
+                'TEST_DATA2',
+            ],
+        ]
+
+        assert TemporaryTables(pairs).to_sql() == r'''WITH TEST_DATA1 AS (
+SELECT * FROM UNNEST(ARRAY<STRUCT<name STRING, category STRING, value INT64>>
+[("abc","bcd",300),("ddd","ccc",400),("\"xxx\"","yyy",123),("\"xxx\"","[\"y\",\"y\",\"y\"]",123)]
+)
+),TEST_DATA2 AS (
+SELECT * FROM UNNEST(ARRAY<STRUCT<name STRING, category STRING, value INT64>>
+[("abc","bdc",200),("ほげほげ","ふがふが",300000)]
+)
+)'''
