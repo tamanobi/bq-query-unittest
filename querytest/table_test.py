@@ -126,6 +126,7 @@ SELECT * FROM UNNEST(ARRAY<STRUCT<name STRING, category STRING, value INT64>>
 )
 )'''
 
+@pytest.mark.skip(reason='BigQueryには直接クエリを発行しない')
 def test_test():
     from google.cloud import bigquery
 
