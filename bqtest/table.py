@@ -5,22 +5,30 @@ import pandas as pd
 import json
 from google.cloud import bigquery
 
+
 class ColumnMeta:
     usable_primitive_types = [
-        "INT64"
-        , "NUMERIC"
-        , "FLOAT64"
-        , "BOOL"
-        , "STRING"
-        , "BYTES"
-        , "DATE"
-        , "DATETIME"
-        , "GEOGRAPHY"
-        , "TIME"
-        , "TIMESTAMP"
+        "INT64",
+        "NUMERIC",
+        "FLOAT64",
+        "BOOL",
+        "STRING",
+        "BYTES",
+        "DATE",
+        "DATETIME",
+        "GEOGRAPHY",
+        "TIME",
+        "TIMESTAMP",
     ]
+
     def __init__(self, _name, _type):
-        assert type(_name) is str and _name != "" and "\n" not in _name and " " not in _name and "," not in _name
+        assert (
+            type(_name) is str
+            and _name != ""
+            and "\n" not in _name
+            and " " not in _name
+            and "," not in _name
+        )
         assert type(_type) is str and _type != "" and self.is_usable_type(_type)
 
         self._name = _name
@@ -52,6 +60,7 @@ class ColumnMeta:
     def __str__(self):
         return f"{self._name} {self._type}"
 
+
 class Schema:
     def __init__(self, column_list):
         assert len(column_list) > 0
@@ -61,8 +70,9 @@ class Schema:
         return [ColumnMeta(_name, _type) for _name, _type in column_list]
 
     def __str__(self):
-        c = ', '.join([str(cl) for cl in self.column_list])
+        c = ", ".join([str(cl) for cl in self.column_list])
         return f"STRUCT<{c}>"
+
 
 class Table:
     # pandasを使っても良いかもしれない
@@ -70,17 +80,17 @@ class Table:
     _rows = None
     _name = None
 
-    def __init__(self, _filename: str, _schema: list, _name:str = ""):
+    def __init__(self, _filename: str, _schema: list, _name: str = ""):
         assert Path(_filename).exists()
 
-        if Path(_filename).suffix == '.csv':
+        if Path(_filename).suffix == ".csv":
             self._rows = pd.read_csv(_filename, header=None, quoting=csv.QUOTE_ALL)
-        elif Path(_filename).suffix == '.json':
+        elif Path(_filename).suffix == ".json":
             with open(_filename, "r") as f:
                 records = json.load(f)
             self._rows = pd.DataFrame.from_records(records, columns=None)
         else:
-            raise ValueError(f'{_filename} は未対応のファイル形式')
+            raise ValueError(f"{_filename} は未対応のファイル形式")
 
         self._schema = Schema(_schema)
         self._name = _name
@@ -97,7 +107,7 @@ class Table:
             new_columns = []
             for col in list(columns)[1:]:
                 if type(col) is str:
-                    escaped_double_quotes = re.sub('"', r'\"', col)
+                    escaped_double_quotes = re.sub('"', r"\"", col)
                     new_columns += [f'"{escaped_double_quotes}"']
                 else:
                     new_columns += [str(col)]
@@ -118,23 +128,30 @@ class Table:
         header = str(self._schema)
         datum = Table.sql_string(self.dataframe_to_string_list())
 
-        return "\n".join([
-            f"{self._name} AS (",
-            f"SELECT * FROM UNNEST(ARRAY<{header}>",
-            f"{datum}",
-            ")",
-            ")"
-        ])
+        return "\n".join(
+            [
+                f"{self._name} AS (",
+                f"SELECT * FROM UNNEST(ARRAY<{header}>",
+                f"{datum}",
+                ")",
+                ")",
+            ]
+        )
+
 
 class TemporaryTables:
     _tables = []
+
     def __init__(self, pairs: list):
         # スキーマとデータのペアをリストで受け取る
-        self._tables = [Table(filename, schema, name)for filename, schema, name in pairs]
+        self._tables = [
+            Table(filename, schema, name) for filename, schema, name in pairs
+        ]
 
     def to_sql(self):
         table_strings = ",".join([table.to_sql() for table in self._tables])
         return f"WITH {table_strings}"
+
 
 class Query:
     _name = ""
@@ -162,6 +179,7 @@ class Query:
     def query_parameters(self):
         return self._query_parameters
 
+
 class QueryLogicTest:
     """クエリロジックのテスト"""
 
@@ -169,17 +187,25 @@ class QueryLogicTest:
     _tables = []
     _expected = None
     _query = None
-    def __init__(self, client, expected_table: 'Table', input_tables: list, query: 'Query'):
+
+    def __init__(
+        self, client, expected_table: "Table", input_tables: list, query: "Query"
+    ):
         self._client = client
         self._expected = expected_table
         self._tables = input_tables
         self._query = query
 
     def build(self):
-        diff = Query('diff', """
+        diff = Query(
+            "diff",
+            """
 SELECT "+" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM ACTUAL EXCEPT DISTINCT SELECT *, ROW_NUMBER() OVER() AS n FROM EXPECTED) UNION ALL
 SELECT "-" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM EXPECTED EXCEPT DISTINCT SELECT *, ROW_NUMBER() OVER() AS n FROM ACTUAL) ORDER BY n ASC
-""", [], {})
+""",
+            [],
+            {},
+        )
         tables = self._tables + [self._expected] + [self._query] + [diff]
         with_clause = ",".join([table.to_sql() for table in tables])
         return f"WITH {with_clause} SELECT * FROM diff"
