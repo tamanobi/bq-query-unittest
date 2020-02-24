@@ -10,6 +10,8 @@
 import csv
 import re
 from pathlib import Path
+import pandas as pd
+import json
 
 class ColumnMeta:
     usable_primitive_types = [
@@ -74,23 +76,63 @@ class Table:
     # pandasを使っても良いかもしれない
     _schema = None
     _rows = None
+    _name = None
 
-    def __init__(self, _filename: str, _schema: list):
+    def __init__(self, _filename: str, _schema: list, _name:str = ""):
         assert Path(_filename).exists()
 
-        with open(_filename, newline='') as csvfile:
-            self._rows = csv.reader(csvfile, delimiter=',')
+        if Path(_filename).suffix == '.csv':
+            self._rows = pd.read_csv(_filename, header=None, quoting=csv.QUOTE_ALL)
+        elif Path(_filename).suffix == '.json':
+            with open(_filename, "r") as f:
+                records = json.load(f)
+            self._rows = pd.DataFrame.from_records(records, columns=None)
+        else:
+            raise ValueError(f'{_filename} は未対応のファイル形式')
 
-        self.schema = Schema(_schema)
-
-        assert self.rows()
+        self._schema = Schema(_schema)
+        self._name = _name
 
     def rows(self):
         return self._rows
 
-    def schema():
+    def schema(self):
         return self._schema
 
+    def dataframe_to_string_list(self):
+        rows = []
+        for columns in self._rows.itertuples():
+            new_columns = []
+            for col in list(columns)[1:]:
+                if type(col) is str:
+                    escaped_double_quotes = re.sub('"', r'\"', col)
+                    new_columns += [f'"{escaped_double_quotes}"']
+                else:
+                    new_columns += [str(col)]
+            rows += [new_columns]
+
+        return rows
+
+    @staticmethod
+    def sql_string(rows):
+        with_parens = []
+        for columns in rows:
+            column_string = ",".join(columns)
+            with_parens += [f"({column_string})"]
+        with_parens_string = ",".join(with_parens)
+        return f"[{with_parens_string}]"
+
+    def to_with_clause(self, with_keyword = True):
+        header = str(self._schema)
+        datum = Table.sql_string(self.dataframe_to_string_list())
+
+        return "\n".join([
+            f"WITH {self._name} AS (",
+            f"SELECT * FROM UNNEST(ARRAY<{header}>",
+            f"{datum}",
+            ")",
+            ")"
+        ])
 
 
 def add(a, b):
