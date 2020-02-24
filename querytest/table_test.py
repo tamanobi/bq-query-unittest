@@ -158,7 +158,8 @@ SELECT "-" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM EXPECTED EX
         query = Query('ACTUAL', """SELECT * FROM abc""", [], {'abc': 'INPUT_DATA'})
 
         qlt = QueryLogicTest(client, expected, input_tables, query)
-        assert list(qlt.run()) == []
+        success, _ = qlt.run()
+        assert not success
 
     def test_差分があるクエリの場合レコードは空ではない(self):
         from google.cloud import bigquery
@@ -169,4 +170,5 @@ SELECT "-" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM EXPECTED EX
         query = Query('ACTUAL', """SELECT * FROM abc""", [], {'abc': 'INPUT_DATA'})
 
         qlt = QueryLogicTest(client, expected, input_tables, query)
-        assert len(list(qlt.run())) > 0
+        success, _ = qlt.run()
+        assert success
