@@ -28,7 +28,7 @@ class ColumnMeta:
         , "TIMESTAMP"
     ]
     def __init__(self, _name, _type):
-        assert type(_name) is str and _name != "" and "\n" not in _name and " " not in _name
+        assert type(_name) is str and _name != "" and "\n" not in _name and " " not in _name and "," not in _name
         assert type(_type) is str and _type != "" and self.is_usable_type(_type)
 
         self._name = _name

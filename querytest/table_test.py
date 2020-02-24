@@ -52,11 +52,13 @@ class TestColumnMeta:
     def test_strで文字列に変更できる(self):
         assert str(ColumnMeta('name', 'STRING')) == 'name STRING'
 
-    def test_nameに改行や空白文字は入れられない(self):
+    def test_nameに改行や空白文字カンマは入れられない(self):
         with pytest.raises(AssertionError):
             assert ColumnMeta('\n', 'STRING')
         with pytest.raises(AssertionError):
             assert ColumnMeta('a b', 'STRING')
+        with pytest.raises(AssertionError):
+            assert ColumnMeta(',', 'STRING')
 
     def test_使えないタイプを入れるとAssertionError(self):
         with pytest.raises(AssertionError):
