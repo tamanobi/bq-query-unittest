@@ -10,8 +10,8 @@ from bqqtest import QueryTest
 from google.cloud import bigquery
 
 expected = {'schema': [('name', 'STRING'), ('value', 'INT64')], 'datum': [['abc', 100]]}
-tables = [{'schema': [('name', 'STRING'), ('value', 'INT64')], 'datum': [['abc', 100]], 'name': 'INPUT_DATA'}]
-query = {'query': 'SELECT * FROM hogehoge', 'map': {'hogehoge': 'INPUT_DATA'}, 'params': []}
+tables = [{'name': 'hogehoge','schema': [('name', 'STRING'), ('value', 'INT64')], 'datum': [['abc', 100]]}]
+query = {'query': 'SELECT * FROM hogehoge', 'params': []}
 qt = QueryTest(bigquery.Client(), expected, tables, query)
 success, diff = qt.run()
 success # True
