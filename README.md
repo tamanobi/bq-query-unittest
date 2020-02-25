@@ -12,12 +12,18 @@ from bqqtest import QueryTest
 from google.cloud import bigquery
 
 # expected
-expected_schema = [("name", "STRING"), ("value", "INT64")]
+expected_schema = [
+    {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+    {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+]
 expected_datum = [["abc", 100], ["bbb", 333]]
 expected = {"schema": expected_schema, "datum": expected_datum}
 
 # actual
-target_schema = [("name", "STRING"), ("value", "INT64")]
+target_schema = [
+    {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+    {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+]
 target_datum = [["abc", 100], ["bbb", 333]]
 tables = {"test.target_table": {"schema": target_schema, "datum": target_datum}}
 eval_query = {"query": "SELECT * FROM test.target_table", "params": []}
@@ -34,12 +40,18 @@ from bqqtest import QueryTest
 from google.cloud import bigquery
 
 # expected
-expected_schema = [("item", "STRING"), ("total", "INT64")]
+expected_schema = [
+    {"name": "item", "type": "STRING", "mode": "NULLABLE"},
+    {"name": "total", "type": "INT64", "mode": "NULLABLE"},
+]
 expected_datum = [["abc", 300], ["bbb", 333]]
 expected = {"schema": expected_schema, "datum": expected_datum}
 
 # actual
-target_schema = [("item", "STRING"), ("value", "INT64")]
+target_schema = [
+    {"name": "item", "type": "STRING", "mode": "NULLABLE"},
+    {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+]
 target_datum = [["abc", 100], ["bbb", 333], ["abc", 200]]
 tables = {"test.target_table": {"schema": target_schema, "datum": target_datum}}
 eval_query = {
@@ -58,13 +70,20 @@ success  # True
 from bqqtest import QueryTest
 from google.cloud import bigquery
 
+
 # expected
-expected_schema = [("name", "STRING"), ("value", "INT64")]
+expected_schema = [
+    {"name": "item", "type": "STRING", "mode": "NULLABLE"},
+    {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+]
 expected_datum = [["abc", 100], ["bbb", 333], ["xxxx", 888], ["zzzz", 999]]
 expected = {"schema": expected_schema, "datum": expected_datum}
 
 # actual
-target_schema = [("name", "STRING"), ("value", "INT64")]
+target_schema = [
+    {"name": "item", "type": "STRING", "mode": "NULLABLE"},
+    {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+]
 target_datum1 = [["abc", 100], ["bbb", 333]]
 target_datum2 = [["xxxx", 888], ["zzzz", 999]]
 tables = {
@@ -82,6 +101,8 @@ success  # True
 ```
 
 ## 特徴
+
+see also https://qiita.com/tamanobi/items/9434ca0dbd5f0d3018d9
 
  * WITH を利用して、 BigQuery に保存されないテストデータを一時的に生成します。
     * BigQuery は保存されているデータ走査した量とAPIリクエスト数で課金されるため、費用抑えてユニットテストができます。
