@@ -438,3 +438,31 @@ class TestQueryTest:
         qt = QueryTest(client, expected, tables, query)
         success, diff = qt.run()
         assert not success and diff != []
+
+    @pytest.mark.skipif(is_githubactions(), reason="GitHub Actions")
+    def test_クエリが誤っていてデータ走査量がゼロではないときにはAssertionError(self):
+        from google.cloud import bigquery
+
+        client = bigquery.Client()
+        tables = {
+            "fuga": {
+                "schema": [{"name": "name", "type": "STRING", "mode": "NULLABLE"},],
+                "datum": [["ddd"]],
+            },
+        }
+        query = {
+            "type": "query",
+            "name": "ACTUAL",
+            "query": "SELECT word_count FROM `bigquery-public-data.samples.shakespeare`",
+            "params": [],
+        }
+        expected = {
+            "type": "data",
+            "name": "EXPECTED",
+            "schema": [{"name": "word_count", "type": "INT64", "mode": "NULLABLE"},],
+            "datum": [[1]],
+        }
+
+        qt = QueryTest(client, expected, tables, query)
+        with pytest.raises(AssertionError):
+            success, diff = qt.run()

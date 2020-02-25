@@ -86,6 +86,9 @@ class Schema:
         return [ColumnMeta(column["name"], column["type"]) for column in columns]
 
     def __str__(self):
+        if len(self.column_list) == 1:
+            return ""
+
         c = ", ".join([str(cl) for cl in self.column_list])
         return f"STRUCT<{c}>"
 
@@ -155,10 +158,13 @@ class Table:
         header = str(self._schema)
         datum = Table.sql_string(self.dataframe_to_string_list())
 
+        if header != "":
+            header = f"<{header}>"
+
         return "\n".join(
             [
                 f"{self._name} AS (",
-                f"SELECT * FROM UNNEST(ARRAY<{header}>",
+                f"SELECT * FROM UNNEST(ARRAY{header}",
                 f"{datum}",
                 ")",
                 ")",
@@ -237,18 +243,44 @@ SELECT "-" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM EXPECTED EX
         with_clause = ",".join([table.to_sql() for table in tables])
         return f"WITH {with_clause} SELECT * FROM diff"
 
+    def is_total_bytes_processed_zero(self):
+        """ドライランによってデータ走査量がゼロかどうか判定する
+
+        セーフティネット
+
+        Returns:
+            (bool): データ走査量がゼロならTrue。それ以外はFalse
+        """
+        query_job = self._client.query(
+            self.build(),
+            job_config=bigquery.QueryJobConfig(
+                query_parameters=self._query.query_parameters(),
+                dry_run=False,
+                use_query_cache=False,
+            ),
+        )
+        query_job.result()
+        return query_job.total_bytes_processed == 0
+
     def run(self):
         """テストを実際に走らせる
 
         Returns:
             tuple: 成功か失敗を示すBoolと文字列
         """
+        assert (
+            self.is_total_bytes_processed_zero()
+        ), "クエリのデータ走査量がゼロではありません。クエリを再確認してください"
+
         query = self.build()
         query_parameters = self._query.query_parameters()
+        job_config = bigquery.QueryJobConfig(
+            query_parameters=query_parameters, dry_run=False, use_query_cache=False
+        )
+        query_job = self._client.query(query, job_config=job_config)
 
-        job_config = bigquery.QueryJobConfig(query_parameters=query_parameters)
-        result = list(self._client.query(query, job_config=job_config))
-        return (len(result) == 0, result)
+        result = query_job.result()
+        return (result.total_rows == 0, [r for r in result])
 
 
 class QueryTest:
