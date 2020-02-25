@@ -4,6 +4,19 @@ from pathlib import Path
 import pandas as pd
 import json
 from google.cloud import bigquery
+import random, string
+
+
+def randomname(n):
+    """ランダムな文字列を返す
+
+    Args:
+        n (int): 文字列長
+
+    Returns:
+        (str): ランダムな文字列(n文字)
+    """
+    return "".join(random.choices(string.ascii_letters, k=n))
 
 
 class ColumnMeta:
@@ -240,10 +253,13 @@ class QueryTest:
 
     def __init__(self, _client, _expected: dict, _tables: list, _query: dict):
         expected = Table(_expected["datum"], _expected["schema"], "EXPECTED")
+
+        table_map = {table["name"]: randomname(16) for table in _tables}
         tables = [
-            Table(table["datum"], table["schema"], table["name"],) for table in _tables
+            Table(table["datum"], table["schema"], table_map[table["name"]])
+            for table in _tables
         ]
-        query = Query("ACTUAL", _query["query"], _query["params"], _query["map"])
+        query = Query("ACTUAL", _query["query"], _query["params"], table_map)
         self._qlt = QueryLogicTest(_client, expected, tables, query)
 
     def run(self):

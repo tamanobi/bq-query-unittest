@@ -309,13 +309,13 @@ class TestQueryTest:
         tables = [
             {
                 "type": "data",
-                "name": "TABLE1",
+                "name": "hogehoge",
                 "schema": [("name", "STRING"), ("value", "INT64")],
                 "datum": [["abc", 100]],
             },
             {
                 "type": "data",
-                "name": "TABLE2",
+                "name": "fuga",
                 "schema": [("name", "STRING"), ("value", "INT64")],
                 "datum": [["ddd", 100]],
             },
@@ -324,7 +324,6 @@ class TestQueryTest:
             "type": "query",
             "name": "ACTUAL",
             "query": "SELECT * FROM hogehoge UNION ALL SELECT * FROM fuga",
-            "map": {"hogehoge": "TABLE1", "fuga": "TABLE2"},
             "params": [],
         }
         expected = {
@@ -346,13 +345,13 @@ class TestQueryTest:
         tables = [
             {
                 "type": "data",
-                "name": "TABLE1",
+                "name": "hogehoge",
                 "schema": [("name", "STRING"), ("value", "INT64")],
                 "datum": [["abc", 100]],
             },
             {
                 "type": "data",
-                "name": "TABLE2",
+                "name": "fuga",
                 "schema": [("name", "STRING"), ("value", "INT64")],
                 "datum": [["ddd", 100]],
             },
@@ -361,7 +360,6 @@ class TestQueryTest:
             "type": "query",
             "name": "ACTUAL",
             "query": "SELECT * FROM hogehoge UNION ALL SELECT * FROM fuga",
-            "map": {"hogehoge": "TABLE1", "fuga": "TABLE2"},
             "params": [],
         }
         expected = {
