@@ -251,13 +251,13 @@ SELECT "-" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM EXPECTED EX
 class QueryTest:
     _qlt = None
 
-    def __init__(self, _client, _expected: dict, _tables: list, _query: dict):
+    def __init__(self, _client, _expected: dict, _tables: dict, _query: dict):
         expected = Table(_expected["datum"], _expected["schema"], "EXPECTED")
 
-        table_map = {table["name"]: randomname(16) for table in _tables}
+        table_map = {name: randomname(16) for name, table in _tables.items()}
         tables = [
-            Table(table["datum"], table["schema"], table_map[table["name"]])
-            for table in _tables
+            Table(table["datum"], table["schema"], table_map[name])
+            for name, table in _tables.items()
         ]
         query = Query("ACTUAL", _query["query"], _query["params"], table_map)
         self._qlt = QueryLogicTest(_client, expected, tables, query)

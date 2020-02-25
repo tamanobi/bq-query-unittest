@@ -306,20 +306,16 @@ class TestQueryTest:
         from google.cloud import bigquery
 
         client = bigquery.Client()
-        tables = [
-            {
-                "type": "data",
-                "name": "hogehoge",
+        tables = {
+            "hogehoge": {
                 "schema": [("name", "STRING"), ("value", "INT64")],
                 "datum": [["abc", 100]],
             },
-            {
-                "type": "data",
-                "name": "fuga",
+            "fuga": {
                 "schema": [("name", "STRING"), ("value", "INT64")],
                 "datum": [["ddd", 100]],
             },
-        ]
+        }
         query = {
             "type": "query",
             "name": "ACTUAL",
@@ -342,20 +338,16 @@ class TestQueryTest:
         from google.cloud import bigquery
 
         client = bigquery.Client()
-        tables = [
-            {
-                "type": "data",
-                "name": "hogehoge",
+        tables = {
+            "hogehoge": {
                 "schema": [("name", "STRING"), ("value", "INT64")],
                 "datum": [["abc", 100]],
             },
-            {
-                "type": "data",
-                "name": "fuga",
+            "fuga": {
                 "schema": [("name", "STRING"), ("value", "INT64")],
                 "datum": [["ddd", 100]],
             },
-        ]
+        }
         query = {
             "type": "query",
             "name": "ACTUAL",
