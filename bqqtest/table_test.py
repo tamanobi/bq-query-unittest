@@ -20,9 +20,9 @@ class TestTable:
     def test_table(self):
         p = Path(__file__).parent / "testdata/test1.csv"
         schema = [
-            ("name", "STRING"),
-            ("category", "STRING"),
-            ("value", "INT64"),
+            {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "category", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "value", "type": "INT64", "mode": "NULLABLE"},
         ]
 
         assert Table(str(p), schema)
@@ -30,9 +30,9 @@ class TestTable:
     def test_to_sqlを呼び出すとデータから一時テーブルを作成できる(self):
         p = Path(__file__).parent / "testdata/test1.csv"
         schema = [
-            ("name", "STRING"),
-            ("category", "STRING"),
-            ("value", "INT64"),
+            {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "category", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "value", "type": "INT64", "mode": "NULLABLE"},
         ]
         t = Table(str(p), schema, "TEST_DATA")
         w = t.to_sql()
@@ -47,11 +47,12 @@ SELECT * FROM UNNEST(ARRAY<STRUCT<name STRING, category STRING, value INT64>>
 
     def test_dataframe_to_string_list(self):
         p = Path(__file__).parent / "testdata/test2.json"
-        t = Table(
-            str(p),
-            [("name", "STRING"), ("category", "STRING"), ("value", "INT64"),],
-            "TEST_DATA",
-        )
+        schema = [
+            {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "category", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+        ]
+        t = Table(str(p), schema, "TEST_DATA",)
 
         assert t.dataframe_to_string_list() == [
             ['"abc"', '"bcd"', "300"],
@@ -72,7 +73,11 @@ SELECT * FROM UNNEST(ARRAY<STRUCT<name STRING, category STRING, value INT64>>
         )
 
     def test_listからTableを生成できる(self):
-        schema = [("name", "STRING"), ("value", "INT64")]
+        schema = [
+            {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+        ]
+
         t = Table([["田中", 78], ["小林", 80]], schema, "TABLE1")
         assert (
             t.to_sql()
@@ -121,15 +126,18 @@ class TestColumnMeta:
 
 
 class TestSchema:
-    def test_スキーマを生成できる(self):
-        assert Schema([("name", "STRING"), ("value", "INT64")])
-
     def test_スキーマは空配列から生成しようとするとAssertionErrorになる(self):
         with pytest.raises(AssertionError):
             assert Schema([])
 
     def test_スキーマはstrでSTRUCTに変換できる(self):
-        s = Schema([("time", "TIMESTAMP"), ("event", "STRING"), ("id", "INT64")])
+        schema = [
+            {"name": "time", "type": "TIMESTAMP", "mode": "NULLABLE"},
+            {"name": "event", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "id", "type": "INT64", "mode": "NULLABLE"},
+        ]
+
+        s = Schema(schema)
         assert str(s) == "STRUCT<time TIMESTAMP, event STRING, id INT64>"
 
 
@@ -138,12 +146,20 @@ class TestTemporalTable:
         pairs = [
             [
                 str(Path(__file__).parent / "testdata/test2.json"),
-                [("name", "STRING"), ("category", "STRING"), ("value", "INT64"),],
+                [
+                    {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+                    {"name": "category", "type": "STRING", "mode": "NULLABLE"},
+                    {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+                ],
                 "TEST_DATA1",
             ],
             [
                 str(Path(__file__).parent / "testdata/test1.csv"),
-                [("name", "STRING"), ("category", "STRING"), ("value", "INT64"),],
+                [
+                    {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+                    {"name": "category", "type": "STRING", "mode": "NULLABLE"},
+                    {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+                ],
                 "TEST_DATA2",
             ],
         ]
@@ -154,12 +170,20 @@ class TestTemporalTable:
         pairs = [
             [
                 str(Path(__file__).parent / "testdata/test2.json"),
-                [("name", "STRING"), ("category", "STRING"), ("value", "INT64"),],
+                [
+                    {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+                    {"name": "category", "type": "STRING", "mode": "NULLABLE"},
+                    {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+                ],
                 "TEST_DATA1",
             ],
             [
                 str(Path(__file__).parent / "testdata/test1.csv"),
-                [("name", "STRING"), ("category", "STRING"), ("value", "INT64"),],
+                [
+                    {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+                    {"name": "category", "type": "STRING", "mode": "NULLABLE"},
+                    {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+                ],
                 "TEST_DATA2",
             ],
         ]
@@ -187,13 +211,21 @@ class TestQueryLogicTest:
 
         expected = Table(
             str(Path(__file__).parent / "testdata/test3.json"),
-            [("name", "STRING"), ("category", "STRING"), ("value", "INT64"),],
+            [
+                {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+                {"name": "category", "type": "STRING", "mode": "NULLABLE"},
+                {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+            ],
             "EXPECTED",
         )
         input_tables = [
             Table(
                 str(Path(__file__).parent / "testdata/test3.json"),
-                [("name", "STRING"), ("category", "STRING"), ("value", "INT64"),],
+                [
+                    {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+                    {"name": "category", "type": "STRING", "mode": "NULLABLE"},
+                    {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+                ],
                 "INPUT_DATA",
             )
         ]
@@ -224,13 +256,21 @@ SELECT "-" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM EXPECTED EX
 
         expected = Table(
             str(Path(__file__).parent / "testdata/test3.json"),
-            [("name", "STRING"), ("category", "STRING"), ("value", "INT64"),],
+            [
+                {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+                {"name": "category", "type": "STRING", "mode": "NULLABLE"},
+                {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+            ],
             "EXPECTED",
         )
         input_tables = [
             Table(
                 str(Path(__file__).parent / "testdata/test3.json"),
-                [("name", "STRING"), ("category", "STRING"), ("value", "INT64"),],
+                [
+                    {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+                    {"name": "category", "type": "STRING", "mode": "NULLABLE"},
+                    {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+                ],
                 "INPUT_DATA",
             )
         ]
@@ -248,13 +288,21 @@ SELECT "-" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM EXPECTED EX
 
         expected = Table(
             str(Path(__file__).parent / "testdata/test4.json"),
-            [("name", "STRING"), ("category", "STRING"), ("value", "INT64"),],
+            [
+                {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+                {"name": "category", "type": "STRING", "mode": "NULLABLE"},
+                {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+            ],
             "EXPECTED",
         )
         input_tables = [
             Table(
                 str(Path(__file__).parent / "testdata/test3.json"),
-                [("name", "STRING"), ("category", "STRING"), ("value", "INT64"),],
+                [
+                    {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+                    {"name": "category", "type": "STRING", "mode": "NULLABLE"},
+                    {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+                ],
                 "INPUT_DATA",
             )
         ]
@@ -278,13 +326,21 @@ SELECT "-" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM EXPECTED EX
 
         expected = Table(
             str(Path(__file__).parent / "testdata/test5.json"),
-            [("name", "STRING"), ("category", "STRING"), ("value", "INT64"),],
+            [
+                {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+                {"name": "category", "type": "STRING", "mode": "NULLABLE"},
+                {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+            ],
             "EXPECTED",
         )
         input_tables = [
             Table(
                 str(Path(__file__).parent / "testdata/test3.json"),
-                [("name", "STRING"), ("category", "STRING"), ("value", "INT64"),],
+                [
+                    {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+                    {"name": "category", "type": "STRING", "mode": "NULLABLE"},
+                    {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+                ],
                 "INPUT_DATA",
             )
         ]
@@ -308,11 +364,17 @@ class TestQueryTest:
         client = bigquery.Client()
         tables = {
             "hogehoge": {
-                "schema": [("name", "STRING"), ("value", "INT64")],
+                "schema": [
+                    {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+                    {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+                ],
                 "datum": [["abc", 100]],
             },
             "fuga": {
-                "schema": [("name", "STRING"), ("value", "INT64")],
+                "schema": [
+                    {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+                    {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+                ],
                 "datum": [["ddd", 100]],
             },
         }
@@ -325,7 +387,10 @@ class TestQueryTest:
         expected = {
             "type": "data",
             "name": "EXPECTED",
-            "schema": [("name", "STRING"), ("value", "INT64")],
+            "schema": [
+                {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+                {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+            ],
             "datum": [["abc", 100], ["ddd", 100]],
         }
 
@@ -340,11 +405,17 @@ class TestQueryTest:
         client = bigquery.Client()
         tables = {
             "hogehoge": {
-                "schema": [("name", "STRING"), ("value", "INT64")],
+                "schema": [
+                    {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+                    {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+                ],
                 "datum": [["abc", 100]],
             },
             "fuga": {
-                "schema": [("name", "STRING"), ("value", "INT64")],
+                "schema": [
+                    {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+                    {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+                ],
                 "datum": [["ddd", 100]],
             },
         }
@@ -357,7 +428,10 @@ class TestQueryTest:
         expected = {
             "type": "data",
             "name": "EXPECTED",
-            "schema": [("name", "STRING"), ("value", "INT64")],
+            "schema": [
+                {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+                {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+            ],
             "datum": [["abc", 100]],
         }
 

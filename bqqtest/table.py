@@ -78,12 +78,12 @@ class ColumnMeta:
 
 
 class Schema:
-    def __init__(self, column_list):
-        assert len(column_list) > 0
-        self.column_list = self.list_to_columns(column_list)
+    def __init__(self, columns: list):
+        assert type(columns) is list and columns
+        self.column_list = self.list_to_columns(columns)
 
-    def list_to_columns(self, column_list):
-        return [ColumnMeta(_name, _type) for _name, _type in column_list]
+    def list_to_columns(self, columns: list):
+        return [ColumnMeta(column["name"], column["type"]) for column in columns]
 
     def __str__(self):
         c = ", ".join([str(cl) for cl in self.column_list])
@@ -100,6 +100,9 @@ class Table:
     _name = None
 
     def __init__(self, _filename_or_list, _schema: list, _name: str = ""):
+        assert type(_filename_or_list) is str or type(_filename_or_list) is list
+        assert type(_schema) is list and _schema
+
         self._schema = Schema(_schema)
         self._name = _name
 
