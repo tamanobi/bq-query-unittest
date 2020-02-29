@@ -378,7 +378,7 @@ python-versions = "*"
 version = "2019.3"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Alternative regular expression module, to replace re."
 name = "regex"
 optional = false
@@ -484,7 +484,7 @@ docs = ["sphinx", "jaraco.packaging (>=3.2)", "rst.linker (>=1.9)"]
 testing = ["jaraco.itertools", "func-timeout"]
 
 [metadata]
-content-hash = "818094ea07cf9fa9ff52493d822c01ba823a6f64e43741d4cbcbfe6aff10970b"
+content-hash = "ab48c42bba1a0b1f77a7ec8ff12654edb1005f892b3226458fdfd1add35b29e8"
 python-versions = "^3.7"
 
 [metadata.files]

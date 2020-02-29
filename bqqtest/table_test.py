@@ -10,6 +10,7 @@ from .table import (
 from pathlib import Path
 import os
 import pytest
+import random
 
 
 def is_githubactions():
@@ -466,3 +467,46 @@ class TestQueryTest:
         qt = QueryTest(client, expected, tables, query)
         with pytest.raises(AssertionError):
             success, diff = qt.run()
+
+    def test_WITH(self):
+        from google.cloud import bigquery
+
+        random.seed(a=0)
+        client = bigquery.Client()
+        tables = {
+            "fuga": {
+                "schema": [{"name": "name", "type": "STRING", "mode": "NULLABLE"},],
+                "datum": [["ddd"]],
+            },
+        }
+        query = {
+            "name": "ACTUAL",
+            "query": """WITH INPUT AS (SELECT * FROM UNNEST(ARRAY<STRUCT<name STRING, value INT64>>[("aaa", 100),("bbb", 200)])) SELECT * FROM INPUT UNION ALL SELECT * FROM fuga""",
+            "params": [],
+        }
+        expected = {
+            "type": "data",
+            "name": "EXPECTED",
+            "schema": [{"name": "word_count", "type": "INT64", "mode": "NULLABLE"},],
+            "datum": [[1]],
+        }
+
+        qt = QueryTest(client, expected, tables, query)
+        assert (
+            """WITH RNvnAvOpyEVAoNGn AS (
+SELECT * FROM UNNEST(ARRAY
+[("ddd")]
+)
+),INPUT AS (
+SELECT * FROM UNNEST(ARRAY<STRUCT<name STRING, value INT64>>[("aaa", 100),("bbb", 200)])
+),EXPECTED AS (
+SELECT * FROM UNNEST(ARRAY
+[(1)]
+)
+),ACTUAL AS ( SELECT * FROM INPUT UNION ALL SELECT * FROM RNvnAvOpyEVAoNGn),diff AS (
+SELECT "+" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM ACTUAL EXCEPT DISTINCT SELECT *, ROW_NUMBER() OVER() AS n FROM EXPECTED) UNION ALL
+SELECT "-" AS mark , * FROM (SELECT *, ROW_NUMBER() OVER() AS n FROM EXPECTED EXCEPT DISTINCT SELECT *, ROW_NUMBER() OVER() AS n FROM ACTUAL) ORDER BY n ASC
+) SELECT * FROM diff"""
+            == qt.build()
+        )
+

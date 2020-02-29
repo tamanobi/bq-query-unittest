@@ -1,10 +1,15 @@
 import csv
-import re
-from pathlib import Path
-import pandas as pd
 import json
+import random
+import re
+import string
+from pathlib import Path
+
+import pandas as pd
+import regex
 from google.cloud import bigquery
-import random, string
+
+from .util import get_query_from_with_clause
 
 
 def randomname(n):
@@ -172,6 +177,21 @@ class Table:
         )
 
 
+class NamedQueryTable:
+    _name = ""
+    _query = ""
+
+    def __init__(self, name: str, query: str):
+        assert isinstance(name, str)
+        assert isinstance(query, str)
+
+        self._name = name
+        self._query = query
+
+    def to_sql(self):
+        return "\n".join([f"{self._name} AS (", f"{self._query}", ")"])
+
+
 class TemporaryTables:
     _tables = []
 
@@ -197,6 +217,8 @@ class Query:
         assert type(query) is str and query != ""
         assert type(query_parameters) is list
         assert type(table_map) is dict
+        if re.match(r"CREATE\s(TABLE|OR)", query, flags=re.IGNORECASE):
+            raise NotImplementedError("CREATE ステートメントは副作用が生じるため未対応")
 
         self._name = name
         self._query = query
@@ -294,9 +316,23 @@ class QueryTest:
             Table(table["datum"], table["schema"], table_map[name])
             for name, table in _tables.items()
         ]
-        query = Query("ACTUAL", _query["query"], _query["params"], table_map)
+
+        # FIXME: WITH句の解析を正規表現で強引に行っているため保守性が低い
+        tables = tables + [
+            NamedQueryTable(name, query)
+            for name, query in get_query_from_with_clause(_query["query"])
+        ]
+
+        query = regex.sub(
+            r"WITH\s+(?<name>\w+)\s+AS\s+(?<query>\((?:[^\(\)]+|(?&query))*\))",
+            "",
+            _query["query"],
+        )
+        query = Query("ACTUAL", query, _query["params"], table_map)
         self._qlt = QueryLogicTest(_client, expected, tables, query)
+
+    def build(self):
+        return self._qlt.build()
 
     def run(self):
         return self._qlt.run()
-
