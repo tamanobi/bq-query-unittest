@@ -468,6 +468,7 @@ class TestQueryTest:
         with pytest.raises(AssertionError):
             success, diff = qt.run()
 
+    @pytest.mark.skipif(is_githubactions(), reason="GitHub Actions")
     def test_WITH(self):
         from google.cloud import bigquery
 
