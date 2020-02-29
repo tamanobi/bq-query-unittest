@@ -1,0 +1,36 @@
+name: Release PyPI
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  release:
+    name: publish
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install
+        uses: abatilo/actions-poetry@v1.5.0
+        with:
+          python_version: 3.7.6
+          poetry_version: 1.0.3
+          working_directory: . # Optional, defaults to '.'
+          args: install
+      - name: Config
+        uses: abatilo/actions-poetry@v1.5.0
+        with:
+          python_version: 3.7.6
+          poetry_version: 1.0.3
+          working_directory: . # Optional, defaults to '.'
+          args: config http-basic.pypi $PYPI_USER $PYPI_PASSWORD
+        env:
+          PYPI_USER: ${{ secrets.pypi_user }}
+          PYPI_PASSWORD: ${{ secrets.pypi_password }}
+      - name: Publish
+        uses: abatilo/actions-poetry@v1.5.0
+        with:
+          python_version: 3.7.6
+          poetry_version: 1.0.3
+          working_directory: . # Optional, defaults to '.'
+          args: publish --build
