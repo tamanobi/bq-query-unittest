@@ -62,6 +62,20 @@ SELECT * FROM UNNEST(ARRAY<STRUCT<name STRING, category STRING, value INT64>>
             [r'"\"xxx\""', r'"[\"y\",\"y\",\"y\"]"', "123"],
         ]
 
+    def test_dataframe_to_string_list_null_contained(self):
+        p = Path(__file__).parent / "testdata/test6.json"
+        schema = [
+            {"name": "name", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "category", "type": "STRING", "mode": "NULLABLE"},
+            {"name": "value", "type": "INT64", "mode": "NULLABLE"},
+        ]
+        t = Table(str(p), schema, "TEST_DATA",)
+
+        assert t.dataframe_to_string_list() == [
+            ['"abc"', "null", "300"],
+            ['"ddd"', '"ccc"', "null"]
+        ]
+
     def test_sql_stringによってリストからsqlのレコードが生成できる(self):
         input_list = [
             ['"abc"', '"bcd"', "300"],

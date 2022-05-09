@@ -81,6 +81,9 @@ class ColumnMeta:
     def name(self):
         return self._name
 
+    def typ(self):  # avoid reserved word
+        return self._type
+
 
 class Schema:
     def __init__(self, columns: list):
@@ -100,6 +103,8 @@ class Schema:
     def names(self):
         return [col.name() for col in self.column_list]
 
+    def types(self):
+        return [col.typ().lower() for col in self.column_list]
 
 class Table:
     # pandasを使っても良いかもしれない
@@ -115,7 +120,6 @@ class Table:
         self._name = _name
 
         header = self._schema.names()
-
         if type(_filename_or_list) is str:
             filename = _filename_or_list
             assert Path(filename).exists()
@@ -137,15 +141,25 @@ class Table:
             raise ValueError("ファイルパスか、listのみに対応しています")
 
     def dataframe_to_string_list(self):
+        df_types = dict(zip(self._schema.names(), self._schema.types()))
         rows = []
         for columns in self._rows.itertuples():
+            cols = columns._asdict()
             new_columns = []
-            for col in list(columns)[1:]:
-                if type(col) is str:
-                    escaped_double_quotes = re.sub('"', r"\"", col)
+            for key in cols.keys():
+                if key == 'Index':
+                    continue
+                if cols[key] is None:
+                    new_columns += ['null']
+                elif repr(cols[key]) == 'nan':
+                    new_columns += ['null']
+                elif df_types[key] == 'int64':
+                    new_columns += [str(int(cols[key]))]
+                elif type(cols[key]) is str:
+                    escaped_double_quotes = re.sub('"', r"\"", str(cols[key]))
                     new_columns += [f'"{escaped_double_quotes}"']
                 else:
-                    new_columns += [str(col)]
+                    new_columns += [str(cols[key])]
             rows += [new_columns]
 
         return rows
